@@ -1,11 +1,39 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ArrowDown, ArrowRight, ArrowUpRight, Braces, Check, CircleDot, Database, Lock, Search, Sparkles, SquareTerminal, Table2, Users, Waypoints } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUpRight, Braces, Check, CircleDot, Database, Expand, Lock, Search, Sparkles, SquareTerminal, Table2, Users, Waypoints } from 'lucide-react';
 import '@fontsource-variable/manrope';
 import '@fontsource/dm-mono/latin-400.css';
 import './style.css';
 
 const beta = 'https://157.245.172.222/beta';
+const asset = (path) => import.meta.env.BASE_URL + path;
+const screenshots = [
+  {
+    id: 'explorer', title: 'Explorador', Icon: Table2, label: '01 / EXPLORACIÓN',
+    alt: 'Explorador de Octagon con una tabla PostgreSQL de renovaciones ficticias, el árbol de objetos y controles de filtros y paginación.',
+    description: 'Abre varias tablas, recorre las filas por bloques y aplica filtros desde la cuadrícula.',
+  },
+  {
+    id: 'queries', title: 'Consultas', Icon: SquareTerminal, label: '02 / CONSULTAS',
+    alt: 'Editor SQL de Octagon con una consulta de renovaciones por región y sus resultados de ejemplo.',
+    description: 'Escribe SQL con el contexto de tu base a la vista y revisa los resultados debajo del editor.',
+  },
+  {
+    id: 'analyst', title: 'Agente', Icon: Sparkles, label: '03 / ANÁLISIS',
+    alt: 'Agente de Octagon con una respuesta de ejemplo y una gráfica de ingresos por región.',
+    description: 'Haz preguntas en lenguaje natural y abre la evidencia detrás de la respuesta cuando la necesites.',
+  },
+];
+
+function selectTab(event, index, tabs, select, prefix) {
+  const next = event.key === 'ArrowRight' ? (index + 1) % tabs.length
+    : event.key === 'ArrowLeft' ? (index + tabs.length - 1) % tabs.length
+    : event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : -1;
+  if (next < 0) return;
+  event.preventDefault();
+  select(next);
+  document.getElementById(prefix + tabs[next].id)?.focus();
+}
 const modes = [
   {
     id: 'sql', label: 'SQL', Icon: Table2, engine: 'PostgreSQL', branch: 'Tablas', active: 'orders',
@@ -31,7 +59,7 @@ const modes = [
 ];
 
 function Brand() {
-  return <a className="brand" href="#inicio" aria-label="Octagon, inicio"><img src={import.meta.env.BASE_URL + 'octagon.png'} alt="" width="35" height="35" /><span>Octagon</span></a>;
+  return <a className="brand" href="#inicio" aria-label="Octagon, inicio"><img src={asset('octagon.png')} alt="" width="35" height="35" /><span>Octagon</span></a>;
 }
 
 function OctagonWire() {
@@ -46,18 +74,8 @@ function OctagonWire() {
 function Workbench() {
   const [active, setActive] = useState(0);
   const mode = modes[active];
-  const changeByKey = (event, index) => {
-    const selected = event.key === 'ArrowRight' ? (index + 1) % modes.length
-      : event.key === 'ArrowLeft' ? (index + modes.length - 1) % modes.length
-      : event.key === 'Home' ? 0 : event.key === 'End' ? modes.length - 1 : -1;
-    if (selected < 0) return;
-    event.preventDefault();
-    setActive(selected);
-    document.getElementById('tab-' + modes[selected].id)?.focus();
-  };
   return <div className="stage">
-    <OctagonWire />
-    <div className="stage-index"><span>FIG. 01</span><span>EXPLORADOR INTERACTIVO</span></div>
+    <div className="stage-index"><span>PRUEBA DE ESCRITORIO</span><span>DEMOSTRACIÓN INTERACTIVA</span></div>
     <div className="workbench">
       <div className="bench-head">
         <span className="traffic" aria-hidden="true"><i/><i/><i/></span>
@@ -65,7 +83,7 @@ function Workbench() {
         <span className="bench-live"><CircleDot size={11} /> Demo</span>
       </div>
       <div className="mode-tabs" role="tablist" aria-label="Motores en la demostración">
-        {modes.map(({ id, label, Icon }, index) => <button key={id} id={'tab-' + id} role="tab" type="button" aria-selected={index === active} aria-controls="bench-result" tabIndex={index === active ? 0 : -1} onClick={() => setActive(index)} onKeyDown={event => changeByKey(event, index)}><Icon size={13} aria-hidden="true"/>{label}</button>)}
+        {modes.map(({ id, label, Icon }, index) => <button key={id} id={'tab-' + id} role="tab" type="button" aria-selected={index === active} aria-controls="bench-result" tabIndex={index === active ? 0 : -1} onClick={() => setActive(index)} onKeyDown={event => selectTab(event, index, modes, setActive, 'tab-')}><Icon size={13} aria-hidden="true"/>{label}</button>)}
       </div>
       <div className="bench-body" id="bench-result" role="tabpanel" aria-labelledby={'tab-' + mode.id} tabIndex="0">
         <aside className="bench-tree" aria-label="Objetos de ejemplo">
@@ -89,7 +107,14 @@ function Workbench() {
 }
 
 function Header() {
-  return <header className="masthead shell"><Brand /><nav aria-label="Navegación principal"><a className="nav-product" href="#producto">Producto</a><a href="#beta" className="nav-beta">Beta privada <ArrowUpRight size={15} aria-hidden="true"/></a></nav></header>;
+  return <header className="masthead shell">
+    <Brand />
+    <nav aria-label="Navegación principal">
+      <a className="nav-product" href="#producto">Producto</a>
+      <a className="nav-product" href="#demo">Demo</a>
+      <a href="#beta" className="nav-beta">Beta privada <ArrowUpRight size={15} aria-hidden="true"/></a>
+    </nav>
+  </header>;
 }
 
 function Hero() {
@@ -97,11 +122,45 @@ function Hero() {
     <div className="hero-copy">
       <p className="eyebrow"><i/> GESTOR DE BASES DE DATOS</p>
       <h1 id="hero-title">Tus datos.<br/><span>Tus reglas.</span></h1>
-      <p className="hero-description">Explora, consulta y edita tus bases desde un solo lugar. Con un agente que te muestra de dónde sacó la respuesta.</p>
-      <div className="hero-actions"><a className="button primary" href={beta}>Acceder a la beta <ArrowUpRight size={19} aria-hidden="true"/></a><a className="button plain" href="#producto">Ver el producto <ArrowDown size={16} aria-hidden="true"/></a></div>
+      <p className="hero-description">Explora, consulta y edita tus bases en un solo lugar. Y cuando tengas una pregunta, pídesela al agente y revisa de dónde salió la respuesta.</p>
+      <div className="hero-actions"><a className="button primary" href={beta}>Acceder a la beta <ArrowUpRight size={18} aria-hidden="true"/></a><a className="button plain" href="#producto">Ver Octagon <ArrowDown size={15} aria-hidden="true"/></a></div>
       <p className="hero-platform">macOS <span>·</span> Apple Silicon <span>·</span> Por invitación</p>
     </div>
-    <Workbench />
+    <div className="brand-visual" aria-hidden="true">
+      <div className="brand-grid"/>
+      <div className="brand-glow"/>
+      <OctagonWire />
+      <span className="calibration calibration-top"><i/> OCTAGON / 01</span>
+      <span className="calibration calibration-bottom">01 / DESKTOP <i/></span>
+      <div className="brand-render"><img src={asset('octagon.png')} alt="" width="220" height="220" fetchPriority="high"/></div>
+    </div>
+  </section>;
+}
+
+function Gallery() {
+  const [active, setActive] = useState(0);
+  const selected = screenshots[active];
+  const dialog = useRef(null);
+  return <section className="gallery shell" id="producto" aria-labelledby="gallery-title">
+    <div className="gallery-top">
+      <h2 className="eyebrow" id="gallery-title"><i/> OCTAGON EN ACCIÓN</h2>
+      <div className="gallery-tabs" role="tablist" aria-label="Pantallas de Octagon">
+        {screenshots.map(({id, title, Icon}, index) => <button id={'screen-' + id} key={id} type="button" role="tab" aria-selected={index === active} aria-controls="product-screen" tabIndex={index === active ? 0 : -1} onClick={() => setActive(index)} onKeyDown={event => selectTab(event, index, screenshots, setActive, 'screen-')}><Icon size={15} aria-hidden="true"/>{title}</button>)}
+      </div>
+    </div>
+    <div className="gallery-panel" id="product-screen" role="tabpanel" aria-labelledby={'screen-' + selected.id} tabIndex={0}>
+      <figure>
+        <div className="gallery-frame">
+          <img key={selected.id} className="gallery-image" src={asset('screens/' + selected.id + '.webp')} alt={selected.alt} width="1440" height="960" decoding="async"/>
+          <button type="button" className="zoom" onClick={() => dialog.current?.showModal()} aria-label="Ampliar captura"><Expand size={18} aria-hidden="true"/></button>
+        </div>
+        <figcaption><span className="screen-mark">{selected.label}</span><p>{selected.description}</p><span className="screen-note">Captura real · datos ficticios</span></figcaption>
+      </figure>
+    </div>
+    <dialog ref={dialog} className="screen-dialog" aria-label={selected.title}>
+      <form method="dialog"><button type="submit" className="button">Cerrar imagen <span aria-hidden="true">×</span></button></form>
+      <img src={asset('screens/' + selected.id + '.webp')} alt={selected.alt} width="1440" height="960" loading="lazy"/>
+    </dialog>
   </section>;
 }
 
@@ -112,23 +171,30 @@ const features = [
 ];
 
 function Product() {
-  return <section className="product" id="producto" aria-labelledby="product-title"><div className="shell">
-    <div className="product-heading"><p className="eyebrow"><Waypoints size={15} aria-hidden="true"/> EL ESPACIO DE TRABAJO</p><h2 id="product-title">Del esquema<br/>a la respuesta.</h2><p>Las bases siguen siendo el centro. El agente, las consultas y los espacios de equipo están ahí cuando los necesitas.</p></div>
+  return <section className="product" aria-labelledby="product-title"><div className="shell">
+    <div className="product-heading"><p className="eyebrow"><Waypoints size={15} aria-hidden="true"/> EL ESPACIO DE TRABAJO</p><h2 id="product-title">Del esquema a la respuesta.</h2><p>Las bases siguen siendo el centro. El agente, las consultas y los espacios de equipo están ahí cuando los necesitas.</p></div>
     <div className="features">{features.map(({Icon,mark,title,text}) => <article key={mark} className="feature"><div className="feature-meta"><Icon size={23} strokeWidth={1.5} aria-hidden="true"/><span>{mark} / 03</span></div><h3>{title}</h3><p>{text}</p></article>)}</div>
   </div></section>;
+}
+
+function Demo() {
+  return <section className="demo shell" id="demo" aria-labelledby="demo-title">
+    <div className="demo-copy"><p className="eyebrow"><SquareTerminal size={16} aria-hidden="true"/> DEMO RÁPIDA</p><h2 id="demo-title">Cambia de motor.<br/>Sigue en lo tuyo.</h2><p>Ve cómo cambia la vista entre una tabla SQL, una colección de MongoDB y una cola de Valkey.</p></div>
+    <Workbench />
+  </section>;
 }
 
 function Beta() {
   return <section className="beta" id="beta" aria-labelledby="beta-title"><div className="shell beta-grid">
     <div className="beta-intro"><p className="eyebrow"><Lock size={14} aria-hidden="true"/> BETA PRIVADA</p><h2 id="beta-title">Octagon en tu Mac.</h2><p>La primera beta es para Mac con chip Apple Silicon. Si ya tienes un código, puedes descargarla y recibir las siguientes versiones dentro de Octagon.</p><a className="button primary" href={beta}>Abrir portal de descarga <ArrowUpRight size={18} aria-hidden="true"/></a></div>
-    <ol className="beta-steps"><li><span>01</span><div><strong>Abre el portal.</strong><p>Introduce tu código de invitación y descarga el ZIP para Apple Silicon.</p></div></li><li><span>02</span><div><strong>Instala Octagon.</strong><p>Descomprime el ZIP y mueve Octagon a Aplicaciones. Esta beta no está notarizada por Apple.</p></div></li><li><span>03</span><div><strong>Recibe nuevas versiones.</strong><p>Guarda el mismo código en Settings → General → Octagon updates y usa Check for updates.</p></div></li></ol>
+    <ol className="beta-steps"><li><span>01</span><div><strong>Abre el portal.</strong><p>Introduce tu código de invitación y descarga el ZIP para Apple Silicon.</p></div></li><li><span>02</span><div><strong>Instala Octagon.</strong><p>Descomprime el ZIP y mueve Octagon a Aplicaciones.</p></div></li><li><span>03</span><div><strong>Recibe nuevas versiones.</strong><p>Guarda el mismo código en Settings → General → Octagon updates y usa Check for updates.</p></div></li></ol>
   </div></section>;
 }
 
 function App() {
-  return <><a className="skip" href="#contenido">Ir al contenido</a><div className="intro" id="inicio"><Header /><main id="contenido"><Hero />
+  return <><a className="skip" href="#contenido">Ir al contenido</a><div className="intro" id="inicio"><Header /><main id="contenido"><Hero /><Gallery/>
     <div className="engines shell"><span className="engine-label">TUS MOTORES, JUNTOS</span><ul aria-label="Motores compatibles"><li>PostgreSQL</li><li>MySQL</li><li>MongoDB</li><li>Supabase</li><li>Redis</li><li>Valkey</li></ul></div>
-    <Product/><Beta/></main></div><footer className="site-footer"><div className="shell footer-inner"><Brand/><p>Diseñado para quienes trabajan con datos.</p><a href="#inicio">Volver arriba <ArrowRight size={14} aria-hidden="true"/></a></div></footer></>;
+    <Product/><Demo/><Beta/></main></div><footer className="site-footer"><div className="shell footer-inner"><Brand/><p>Diseñado para quienes trabajan con datos.</p><a href="#inicio">Volver arriba <ArrowRight size={14} aria-hidden="true"/></a></div></footer></>;
 }
 
 createRoot(document.getElementById('root')).render(<App />);
